@@ -1,13 +1,35 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, ElementRef, signal, viewChild } from '@angular/core';
+import { createEmbeddingContext } from 'amazon-quicksight-embedding-sdk';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  template: `
+    <button (click)="showContainer.set(true)">Show container</button>
+    <button (click)="showContainer.set(false)">Hide container</button>
+
+    @if(showContainer()){
+    <div>
+      <div #quicksightContainer></div>
+    </div>
+    }
+  `,
 })
 export class AppComponent {
-  title = 'repro-amazon-quicksight-embedding-sdk';
+  showContainer = signal(true);
+
+  quicksightContainer = viewChild('quicksightContainer', { read: ElementRef });
+
+  ngAfterViewInit() {
+    const quicksightContainer = this.quicksightContainer()?.nativeElement;
+
+    if (quicksightContainer) {
+      createEmbeddingContext().then((embeddingContext) => {
+        embeddingContext.embedQSearchBar({
+          container: quicksightContainer,
+          url: 'add-your-url-here',
+        });
+      });
+    }
+  }
 }
